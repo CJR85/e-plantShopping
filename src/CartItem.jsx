@@ -7,9 +7,25 @@ const CartItem = ({ onContinueShopping }) => {
   const cart = useSelector((state) => state.cart.items);
   const dispatch = useDispatch();
 
+  const parseItemCostToInteger = (itemCost) => {
+    /*
+            Remove currency symbol before multiplication.
+            Otherwise, NaN returned.
+            Improve in future: Use regex to remove all possible currency symbols?
+        */
+    return parseInt(itemCost.replace("$", ""), 10);
+  };
+
   // Calculate total amount for all products in the cart
   const calculateTotalAmount = () => {
-    return cart.reduce((total, item) => total + item.cost * item.quantity, 0);
+    let totalCost = 0;
+
+    cart.forEach((item) => {
+      const itemCost = parseItemCostToInteger(item.cost);
+      totalCost += itemCost * item.quantity;
+    });
+
+    return totalCost;
   };
 
   const handleContinueShopping = (e) => {
@@ -17,28 +33,38 @@ const CartItem = ({ onContinueShopping }) => {
   };
 
   const handleCheckoutShopping = (e) => {
-    alert("Checkout functionality is not implemented yet.");
+    alert("Functionality to be added for future reference");
   };
 
   const handleIncrement = (item) => {
-    dispatch(updateQuantity({ name: item.name, quantity: item.quantity + 1 }));
+    const updatedItem = { ...item };
+    updatedItem.quantity++;
+    dispatch(updateQuantity(updatedItem));
   };
 
   const handleDecrement = (item) => {
-    if (item.quantity > 1) {
-      dispatch(
-        updateQuantity({ name: item.name, quantity: item.quantity - 1 }),
-      );
+    const updatedItem = { ...item };
+
+    if (updatedItem.quantity == 1) {
+      // Remove item if number of items gets decremented to 0
+      dispatch(removeItem(updatedItem));
+    } else {
+      updatedItem.quantity--;
+      dispatch(updateQuantity(updatedItem));
     }
   };
 
   const handleRemove = (item) => {
-    dispatch(removeItem({ name: item.name }));
+    dispatch(removeItem(item));
   };
 
   // Calculate total cost based on quantity for an item
   const calculateTotalCost = (item) => {
-    return item.cost * item.quantity;
+    let totalCost = 0;
+    const itemCost = parseItemCostToInteger(item.cost);
+    totalCost = item.quantity * itemCost;
+
+    return totalCost;
   };
 
   return (
@@ -95,7 +121,12 @@ const CartItem = ({ onContinueShopping }) => {
           Continue Shopping
         </button>
         <br />
-        <button className="get-started-button1">Checkout</button>
+        <button
+          className="get-started-button1"
+          onClick={(e) => handleCheckoutShopping(e)}
+        >
+          Checkout
+        </button>
       </div>
     </div>
   );
